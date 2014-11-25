@@ -8,12 +8,14 @@ def get_next_link(page):
 	url = page[start_quotes+1:end_quotes]
 	return url,end_quotes
 
-def print_all_links(page):
+def get_all_links(page):
+	links=[]
 	while True:
 		url,end_quotes = get_next_link(page)
 		if not url==None:
-			print url
+			links.append(url)	
 			page = page[end_quotes:]
 		else:
-			break
-print_all_links(page)
+			return links
+Links = get_all_links(page)
+print Links
