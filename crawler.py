@@ -2,6 +2,15 @@
 #import httplib
 #import urlparse
 
+import urllib2
+
+def internet_on():
+    try:
+        response=urllib2.urlopen('http://74.125.228.100',timeout=1)
+        return True
+    except urllib2.URLError as err: pass
+    return False
+
 #def get_server_status_code(url):
 #    """
 #    Download just the header of a URL and
@@ -28,11 +37,16 @@ def get_page(url):
 #		seed = urllib2.urlopen(url)
 #		page = seed.read()
 #		return page
-	try:
-		import urllib2
-		return urllib2.urlopen(url).read()
-	except:
+	if internet_on():
+		try:
+			import urllib2
+			return urllib2.urlopen(url).read()
+		except:
+			return ""
+	else:
+		print "Please check your connectivity"
 		return ""
+		
 
 
 def get_next_link(page):
