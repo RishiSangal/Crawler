@@ -1,7 +1,3 @@
-#import urllib2
-#import httplib
-#import urlparse
-
 import urllib2
 
 def internet_on():
@@ -11,32 +7,8 @@ def internet_on():
     except urllib2.URLError as err: pass
     return False
 
-#def get_server_status_code(url):
-#    """
-#    Download just the header of a URL and
-#    return the server's status code.
-#    """
-#    host, path = urlparse.urlparse(url)[1:3]    # elems [1] and [2]
-#    try:
-#        conn = httplib.HTTPConnection(host)
-#        conn.request('HEAD', path)
-#        return conn.getresponse().status
-#    except StandardError:
-#        return None
- 
-#def check_url(url):
-#    """
-#    Check if a URL exists without downloading the whole file.
-#    We only check the URL header.
-#    """
-#    good_codes = [httplib.OK, httplib.FOUND, httplib.MOVED_PERMANENTLY]
-#    return get_server_status_code(url) in good_codes
 
 def get_page(url):
-#	if check_url(url):
-#		seed = urllib2.urlopen(url)
-#		page = seed.read()
-#		return page
 	if internet_on():
 		try:
 			import urllib2
@@ -62,12 +34,30 @@ def get_all_links(page):
 	links=[]
 	while True:
 		url,end_quotes = get_next_link(page)
-		if not url==None:
-			links.append(url)
-#			print url
+		if not url ==None:
+			# print url
+			if 'http' in url:
+				if not ('#' in url) :
+					links.append(url)
 			page = page[end_quotes:]
 		else:
 			return links
+
+def get_all_keywords(page):
+	keywords = []
+	start_link = page.find('<meta')
+	if not start_link == -1:
+		key_meta_start = page.find('keywords',start_link+1)
+		if not key_meta_start == -1:
+			content_start = page.find('content',key_meta_start+1)
+			content_start_quote = page.find('"',content_start)
+			content_end_quote = page.find('"',content_start_quote+1)
+			data = page[content_start_quote+1:content_end_quote]
+			data = data.strip().split(',')
+			for e in data:
+				keywords.append(e)
+	return keywords
+
 def union(p,q):
 	for e in q:
 		if e not in p:
@@ -82,6 +72,9 @@ def crawl_web(seed,max_depth):
 		page = tocrawl.pop()
 		if page not in crawled:
 			union(next_depth,get_all_links(get_page(page)))
+			keywords = get_all_keywords(get_page(page))
+			print page
+			print keywords
 			crawled.append(page)
 		if not tocrawl:
 			tocrawl, next_depth=next_depth, []
@@ -89,8 +82,8 @@ def crawl_web(seed,max_depth):
 
 	return tocrawl
 
-#seed = 'https://www.udacity.com/cs101x/index.html'
+
 seed = 'http://www.caranddriver.com/'
-max_depth = 1 #defining number of webpages to be crawled
+max_depth = 2 #defining number of webpages to be crawled
 Links = crawl_web(seed,max_depth)
-print Links
+# print Links
