@@ -58,8 +58,8 @@ def get_all_keywords(page):
             data = page[content_start_quote+1:content_end_quote]
             data = data.strip(' ').split(',')
             for e in data:
-                a = e.strip(' ')
-                keywords.append(str(a).encode('UTF-8','replace'))
+                a = e.decode('utf-8').strip(' ')
+                keywords.append(str(a))
     return keywords
 
 
