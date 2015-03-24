@@ -56,9 +56,10 @@ def get_all_keywords(page):
             content_start_quote = page.find('"', content_start)
             content_end_quote = page.find('"', content_start_quote+1)
             data = page[content_start_quote+1:content_end_quote]
-            data = data.strip().split(',')
+            data = data.strip(' ').split(',')
             for e in data:
-                keywords.append(e)
+                a = e.strip(' ')
+                keywords.append(str(a).encode('UTF-8','replace'))
     return keywords
 
 
@@ -79,7 +80,10 @@ def store_data(link,keywords):
 
     #mongo
     if db.data.find_one({'url':link}).count() == 0:
-        db.data.insert({'url':link,'keywords':keywords})
+        try:
+            db.data.insert({'url':link,'keywords':keywords})
+        except:
+            pass
     #db.newdata.find({},{})
 
 def index_fields():
