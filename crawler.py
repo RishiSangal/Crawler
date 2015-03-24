@@ -79,7 +79,7 @@ def store_data(link,keywords):
     #     print(cRedis.hmget(link,['keywords']))
 
     #mongo
-    if db.data.find_one({'url':link}).count() == 0:
+    if db.data.find({'url':link}).count() == 0:
         try:
             db.data.insert({'url':link,'keywords':keywords})
         except:
