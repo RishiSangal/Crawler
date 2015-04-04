@@ -1,6 +1,6 @@
 # curl -X<VERB> '<PROTOCOL>://<HOST>/<PATH>?<QUERY_STRING>' -d '<BODY>'
 import urllib2
-import json
+import datetime
 import pymongo
 
 db = pymongo.Connection(host='128.199.148.204')['crawl']
@@ -40,7 +40,7 @@ def get_all_links(page):
         url,end_quotes = get_next_link(page)
         if not url ==None:
             if 'http' in url:
-                if not ('#' in url):
+                if not (('#' or 'facebook')  in url):
                     links.append(url)
             page = page[end_quotes:]
         else:
@@ -48,6 +48,7 @@ def get_all_links(page):
 
 def get_all_keywords(page):
     keywords = []
+    print "grabbing keywords"
     start_link = page.find('<meta')
     if not start_link == -1:
         key_meta_start = page.find('keywords',start_link+1)
@@ -58,12 +59,16 @@ def get_all_keywords(page):
             data = page[content_start_quote+1:content_end_quote]
             data = data.strip(' ').split(',')
             for e in data:
-                a = e.decode('utf-8').strip(' ')
-                keywords.append(str(a))
+                a = e.strip(' ')
+                try:
+                    keywords.append(str(a))
+                except UnicodeEncodeError:
+                    pass
     return keywords
 
 
 def store_data(link,keywords):    
+    print "storing data"
     # data = {'keywords':keywords}
     # data = json.dumps(data)
     # # r = requests.put('http://128.199.148.204:9200/crawler/1/1',data)
@@ -79,11 +84,14 @@ def store_data(link,keywords):
     #     print(cRedis.hmget(link,['keywords']))
 
     #mongo
-    if db.data.find({'url':link}).count() == 0:
-        try:
-            db.data.insert({'url':link,'keywords':keywords})
-        except:
-            pass
+    if not keywords == []:
+        if db.data.find({'url':link}).count() == 0:
+            try:
+
+                db.data.insert({'url':link,'keywords':keywords, 'timestamp': datetime.datetime.now()})
+
+            except:
+                pass
     #db.newdata.find({},{})
 
 def index_fields():
@@ -101,12 +109,17 @@ def crawl_web(seed,max_depth):
     crawled = []
     next_depth = []
     depth = 0
+    print "crawling started"
     while tocrawl and depth<max_depth:
         page = tocrawl.pop()
+        if (';' or '&' or '=' or '%') in page:
+            print 'skipped url',page
+            continue
         if page not in crawled:
             union(next_depth,get_all_links(get_page(page)))
             keywords = get_all_keywords(get_page(page))
             store_data(page,keywords)
+            print page
             crawled.append(page)
         if not tocrawl:
             tocrawl, next_depth=next_depth, []
@@ -115,8 +128,9 @@ def crawl_web(seed,max_depth):
     return tocrawl
 
 
-seed = 'http://www.caranddriver.com/'
-max_depth = 2 #defining number of webpages to be crawled
+seed = 'http://amazon.com'
+max_depth = 5 #defining number of webpages to be crawled
 Links = crawl_web(seed,max_depth)
 index_fields()
 # print Links
+
