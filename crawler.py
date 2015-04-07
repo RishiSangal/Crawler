@@ -38,20 +38,9 @@ def get_next_link(page):
 
 
 def get_all_links(page):
-    links = []
-    while True:
-        url, end_quotes = get_next_link(page)
-        if not url == None:
-            if 'http' in url:
-                if not (('#' or 'facebook') in url):
-                    links.append(url)
-            page = page[end_quotes:]
-        else:
-            return links
 
-
-def get_all_keywords(page):
     keywords = []
+    links = []
     print "grabbing keywords"
     start_link = page.find('<meta')
     if not start_link == -1:
@@ -68,11 +57,23 @@ def get_all_keywords(page):
                     keywords.append(str(a))
                 except UnicodeEncodeError:
                     pass
-    return keywords
+
+    while True:
+        url, end_quotes = get_next_link(page)
+        if not url == None:
+            if 'http' in url:
+                if not (('#' or 'facebook') in url):
+                    links.append(url)
+            page = page[end_quotes:]
+        else:
+            print links, keywords
+            return links, keywords
+
+
+
 
 
 def store_data(link, keywords):
-    print "storing data"
     # ElasticSearch
     # data = {'keywords':keywords}
     # data = json.dumps(data)
@@ -90,11 +91,14 @@ def store_data(link, keywords):
 
     # mongo
     if not keywords == []:
+        print "storing data"
         if db.data.find({'url': link}).count() == 0:
             try:
                 db.data.insert({'url': link, 'keywords': keywords, 'timestamp': datetime.datetime.now()})
             except:
                 pass
+        else:
+            print('Skipped because of empty keywords list')
 
 
 def index_fields():
@@ -120,8 +124,10 @@ def crawl_web(seed, max_depth):
             print 'skipped url', page
             continue
         if page not in crawled:
-            union(next_depth, get_all_links(get_page(page)))
-            keywords = get_all_keywords(get_page(page))
+            print "Crawling"
+            crawled_links, keywords = get_all_links(get_page(page))
+            union(next_depth, crawled_links)
+
             store_data(page, keywords)
             print page
             crawled.append(page)
