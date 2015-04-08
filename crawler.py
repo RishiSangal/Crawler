@@ -52,7 +52,7 @@ def get_all_links(page):
             data = page[content_start_quote+1:content_end_quote]
             data = data.strip(' ').split(',')
             for e in data:
-                a = e.strip(' ')
+                a = e.lower().strip(' ')
                 try:
                     keywords.append(str(a))
                 except UnicodeEncodeError:
@@ -95,6 +95,7 @@ def store_data(link, keywords):
         if db.data.find({'url': link}).count() == 0:
             try:
                 db.data.insert({'url': link, 'keywords': keywords, 'timestamp': datetime.datetime.now()})
+                db.rtu.insert({'url': link, 'keywords': keywords, 'timestamp': datetime.datetime.now()})
             except:
                 pass
         else:
@@ -138,7 +139,7 @@ def crawl_web(seed, max_depth):
     return tocrawl
 
 
-seed_url = 'http://amazon.com'
+seed_url = 'http://www.rtu.ac.in'
 max_depth_url = 5  # defining number of webpages to be crawled
 Links = crawl_web(seed_url, max_depth_url)
 index_fields()
